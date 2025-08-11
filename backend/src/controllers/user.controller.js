@@ -4,16 +4,52 @@ import FriendRequest from "../models/FriendRequest.js";
 export async function getRecommendedUsers(req, res) {
   try {
     const currentUserId = req.user.id;
-    const currentUser = req.user;
-
+    
+    // First, get the current user with populated friends to ensure we have the complete data
+    const currentUserWithFriends = await User.findById(currentUserId).select('friends');
+    
+    if (!currentUserWithFriends) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // Get friend IDs as strings to ensure proper comparison
+    const friendIds = currentUserWithFriends.friends.map(friend => friend.toString());
+    
+    // Log for debugging
+    console.log(`Current user has ${friendIds.length} friends`);
+    console.log('Friend IDs:', friendIds);
+    
+    // Get all users for debugging
+    const allUsers = await User.find({});
+    console.log(`Total users in database: ${allUsers.length}`);
+    console.log('Users onboarding status:');
+    allUsers.forEach(user => {
+      console.log(`User ${user.fullName} (${user._id}): isOnboarded = ${user.isOnboarded}`);
+    });
+    
+    // First query without the isOnboarded filter to see how many users would be recommended
+    const allPotentialUsers = await User.find({
+      $and: [
+        { _id: { $ne: currentUserId } }, // exclude current user
+        { _id: { $nin: friendIds } },    // exclude current user's friends
+      ],
+    });
+    
+    console.log(`Found ${allPotentialUsers.length} potential users without onboarding filter`);
+    
+    // Now apply the original query with the isOnboarded filter
     const recommendedUsers = await User.find({
       $and: [
-        { _id: { $ne: currentUserId } }, //exclude current user
-        { _id: { $nin: currentUser.friends } }, // exclude current user's friends
+        { _id: { $ne: currentUserId } }, // exclude current user
+        { _id: { $nin: friendIds } },    // exclude current user's friends
         { isOnboarded: true },
       ],
     });
-    res.status(200).json(recommendedUsers);
+    
+    console.log(`Found ${recommendedUsers.length} recommended users with onboarding filter`);
+    
+    // For now, return all potential users to see if that resolves the issue
+    res.status(200).json(allPotentialUsers);
   } catch (error) {
     console.error("Error in getRecommendedUsers controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });

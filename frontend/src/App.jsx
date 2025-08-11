@@ -6,6 +6,7 @@ import NotificationPage from "./pages/NotificationPage.jsx"
 import CallPage from "./pages/CallPage.jsx"
 import ChatPage from "./pages/ChatPage.jsx"
 import OnBoardingPage from "./pages/OnBoardingPage.jsx"
+import FriendsPage from "./pages/FriendPage.jsx"
 
 import {Toaster} from "react-hot-toast"
 // import { useState, useEffect } from 'react'
@@ -22,7 +23,7 @@ const App = () => {
   const {theme} = useThemeStore();
 
   const isAuthenticated = Boolean(authUser);
-  const isOnBoarded = authUser?.isOnBoarded;
+  const isOnBoarded = authUser?.isOnboarded;
 
   if (isLoading) return <PageLoader/>
   
@@ -36,6 +37,8 @@ const App = () => {
         <Route path="/call/:id" element={isAuthenticated && isOnBoarded ? (<CallPage />) : (<Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />)}/>
        <Route path="/chat/:id"element={isAuthenticated && isOnBoarded ? (<Layout showSidebar={false}><ChatPage /> </Layout>) : (<Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />)}/>
        <Route path="/onboarding" element={ isAuthenticated ? ( !isOnBoarded ? ( <OnBoardingPage />) : (<Navigate to="/" />) ) : ( <Navigate to="/login" />)}/>
+       <Route path="/friends" element={ isAuthenticated && isOnBoarded ? ( <Layout showSidebar={true}> <FriendsPage /> </Layout>) : (<Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />)}/>
+
     </Routes> 
     <Toaster/>
     </div>
